@@ -1,6 +1,7 @@
 var openid = require('openid');
 var express = require('express');
-
+var url = require('url');
+var querystring = require('querystring');
 var app = express();
 
 app.configure(function() {
@@ -15,19 +16,44 @@ app.configure(function() {
   app.use(express.static(__dirname + '/public'));
 });
 
+var extensions = [new openid.UserInterface(), 
+                  new openid.SimpleRegistration(
+                      {
+                        "nickname" : true, 
+                        "email" : true, 
+                        "fullname" : true,
+                        "dob" : true, 
+                        "gender" : true, 
+                        "postcode" : true,
+                        "country" : true, 
+                        "language" : true, 
+                        "timezone" : true
+                      }),
+                  new openid.AttributeExchange(
+                      {
+                        "http://axschema.org/contact/email": "required",
+                        "http://axschema.org/namePerson/friendly": "required",
+                        "http://axschema.org/namePerson": "required"
+                      }),
+                  new openid.PAPE(
+                      {
+                        "max_auth_age": 24 * 60 * 60, // one day
+                        "preferred_auth_policies" : "none" //no auth method preferred.
+                      })];
+
 var relyingParty = new openid.RelyingParty(
     'http://localhost:8888/login/verify', // Verification URL (yours)
     null, // Realm (optional, specifies realm for OpenID authentication)
     false, // Use stateless verification
     false, // Strict mode
-    []); // List of extensions to enable and include
+    extensions); // List of extensions to enable and include
 
 app.get('/login', function(request, response) {
 	response.render('login');
 });
 
 app.get('/login/authenticate', function(request, response) {
-	var identifier = request.query.openid_identifier;
+	var identifier = 'https://www.udacity.com/openid';
 
 	// Resolve identifier, associate, and build authentication URL
 	relyingParty.authenticate(identifier, false, function(error, authUrl) 	{
