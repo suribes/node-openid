@@ -73,19 +73,22 @@ app.get('/login/verify', function(request, response) {
 	// console.log(request);
 	// console.log('Now response');
 	relyingParty.verifyAssertion(request, function(error, result) {
-		response.writeHead(200);
-		if (result.authenticated) {
+		//response.writeHead(200);
+
+		if (!error && result.authenticated) {
 			if (result.country === 'udacity') {
 				console.log('Welcome Udacian!');
+				response.redirect('https://student-portal.udacity.com');
 			}
 		} else {
 			console.log('Fail');
+			response.redirect('/login');
 		}
 
 
-		response.end(!error && result.authenticated 
-			? 'Success :)' // TODO: redirect to something interesting!
-			: 'Failure :('); // TODO: show some error message!
+		// response.end(!error && result.authenticated 
+		// 	? 'Success :)' // TODO: redirect to something interesting!
+		// 	: 'Failure :('); // TODO: show some error message!
 	});
 });
 
