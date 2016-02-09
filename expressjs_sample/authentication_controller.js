@@ -2,6 +2,7 @@ var openid = require('openid');
 var express = require('express');
 var url = require('url');
 var querystring = require('querystring');
+
 var app = express();
 
 app.configure(function() {
@@ -28,7 +29,8 @@ var extensions = [new openid.UserInterface(),
                       {
                         "http://axschema.org/contact/email": "required",
                         "http://axschema.org/namePerson/friendly": "required",
-                        "http://axschema.org/namePerson": "required"
+                        "http://axschema.org/namePerson": "required",
+                        "http://openid.net/schema/person/guid": "required"
                       }),
                   new openid.PAPE(
                       {
@@ -37,17 +39,20 @@ var extensions = [new openid.UserInterface(),
                       })];
 
 var relyingParty = new openid.RelyingParty(
-    'http://localhost:8888/login/verify', // Verification URL (yours)
+    'http://localhost:8888/verify', // Verification URL (yours)
     null, // Realm (optional, specifies realm for OpenID authentication)
     false, // Use stateless verification
     false, // Strict mode
     extensions); // List of extensions to enable and include
 
-app.get('/login', function(request, response) {
+var user = {};
+user.country='udacity';
+
+app.get('/', function(request, response) {
 	response.render('login');
 });
 
-app.get('/login/authenticate', function(request, response) {
+app.get('/authenticate', function(request, response) {
 	var identifier = 'https://www.udacity.com/openid';
 
 	// Resolve identifier, associate, and build authentication URL
@@ -67,7 +72,7 @@ app.get('/login/authenticate', function(request, response) {
 	});
 });
 
-app.get('/login/verify', function(request, response) {
+app.get('/verify', function(request, response) {
 	// Verify identity assertion
 	// NOTE: Passing just the URL is also possible
 	// console.log(request);
@@ -77,14 +82,15 @@ app.get('/login/verify', function(request, response) {
 
 		if (!error && result.authenticated) {
 			if (result.country === 'udacity') {
+				user.country='udacity';
 				console.log('Welcome Udacian!');
 				response.redirect('https://student-portal.udacity.com');
+
 			}
 		} else {
 			console.log('Fail');
-			response.redirect('/login');
+			response.render('/');
 		}
-
 
 		// response.end(!error && result.authenticated 
 		// 	? 'Success :)' // TODO: redirect to something interesting!
