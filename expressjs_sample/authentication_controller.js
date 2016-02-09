@@ -22,12 +22,7 @@ var extensions = [new openid.UserInterface(),
                         "nickname" : true, 
                         "email" : true, 
                         "fullname" : true,
-                        "dob" : true, 
-                        "gender" : true, 
-                        "postcode" : true,
-                        "country" : true, 
-                        "language" : true, 
-                        "timezone" : true
+                        "country" : true
                       }),
                   new openid.AttributeExchange(
                       {
@@ -75,8 +70,19 @@ app.get('/login/authenticate', function(request, response) {
 app.get('/login/verify', function(request, response) {
 	// Verify identity assertion
 	// NOTE: Passing just the URL is also possible
+	// console.log(request);
+	// console.log('Now response');
 	relyingParty.verifyAssertion(request, function(error, result) {
 		response.writeHead(200);
+		if (result.authenticated) {
+			if (result.country === 'udacity') {
+				console.log('Welcome Udacian!');
+			}
+		} else {
+			console.log('Fail');
+		}
+
+
 		response.end(!error && result.authenticated 
 			? 'Success :)' // TODO: redirect to something interesting!
 			: 'Failure :('); // TODO: show some error message!
