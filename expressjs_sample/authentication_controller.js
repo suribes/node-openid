@@ -1,4 +1,19 @@
 var openid = require('openid');
+var express = require('express');
+
+var app = express();
+
+app.configure(function() {
+  app.set('views', __dirname);
+  app.set('view engine', 'jade');
+  app.use(express.logger());
+  app.use(express.cookieParser());
+  app.use(express.bodyParser());
+  app.use(express.methodOverride());
+  app.use(express.session({ secret: 'my_precious' }));
+  app.use(app.router);
+  app.use(express.static(__dirname + '/public'));
+});
 
 var relyingParty = new openid.RelyingParty(
     'http://localhost:8888/login/verify', // Verification URL (yours)
@@ -41,3 +56,8 @@ app.get('/login/verify', function(request, response) {
 			: 'Failure :('); // TODO: show some error message!
 	});
 });
+
+// port
+app.listen(8888);
+
+module.exports = app;
