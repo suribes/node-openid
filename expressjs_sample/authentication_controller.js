@@ -1,21 +1,38 @@
 var openid = require('openid');
 var express = require('express');
+var redis = require('redis');
 var url = require('url');
 var querystring = require('querystring');
-
+var req = require('request');
+// var session = require('express-session');
+// var RedisStore = require('connect-redis')(session);
 var app = express();
 
+
 app.configure(function() {
-  app.set('views', __dirname);
-  app.set('view engine', 'jade');
-  app.use(express.logger());
-  app.use(express.cookieParser());
-  app.use(express.bodyParser());
-  app.use(express.methodOverride());
-  app.use(express.session({ secret: 'my_precious' }));
-  app.use(app.router);
-  app.use(express.static(__dirname + '/public'));
+  	app.set('views', __dirname);
+  	app.set('view engine', 'jade');
+  	app.use(express.logger());
+	app.use(express.cookieParser());
+	app.use(express.cookieSession({
+	  key: 'app.sess',
+	  secret: 'SUPERsekret'
+	}));
+	app.use(express.bodyParser());
+	app.use(express.methodOverride());
+	app.use(app.router);
+	app.use(express.static(__dirname + '/public'));
 });
+
+// ({ 
+// 		key: 'student-portal',
+// 		store: '',
+// 		// store: new RedisStore({
+// 		// 	host: "localhost",
+// 		// 	port: "8888",
+// 		// 	db: "session-db"
+// 		// }),
+// 		secret: 'my_precious' })
 
 var extensions = [new openid.UserInterface(), 
                   new openid.SimpleRegistration(
@@ -45,51 +62,55 @@ var relyingParty = new openid.RelyingParty(
     false, // Strict mode
     extensions); // List of extensions to enable and include
 
-var user = {};
-user.country='udacity';
 
-app.get('/', function(request, response) {
-	response.render('login');
+
+app.get('/', function(req, res) {
+	res.render('login');
+});
+app.get('/hello', checkAuth, function(req,res) {
+	res.render('hello');
 });
 
-app.get('/authenticate', function(request, response) {
+app.get('/authenticate', function(req, res) {
 	var identifier = 'https://www.udacity.com/openid';
 
 	// Resolve identifier, associate, and build authentication URL
 	relyingParty.authenticate(identifier, false, function(error, authUrl) 	{
 		if (error) {
-			response.writeHead(200);
-			response.end('Authentication failed: ' + error.message);
+			res.writeHead(200);
+			res.end('Authentication failed: ' + error.message);
 		}
 		else if (!authUrl) {
-			response.writeHead(200);
-			response.end('Authentication failed');
+			res.writeHead(200);
+			res.end('Authentication failed');
 		}
 		else {
-			response.writeHead(302, { Location: authUrl });
-			response.end();
+			res.writeHead(302, { Location: authUrl });
+			res.end();
 		}
 	});
 });
 
-app.get('/verify', function(request, response) {
+app.get('/verify', function(req, res) {
 	// Verify identity assertion
 	// NOTE: Passing just the URL is also possible
 	// console.log(request);
 	// console.log('Now response');
-	relyingParty.verifyAssertion(request, function(error, result) {
+	relyingParty.verifyAssertion(req, function(error, result) {
 		//response.writeHead(200);
 
 		if (!error && result.authenticated) {
 			if (result.country === 'udacity') {
-				user.country='udacity';
+				req.session.user = 'udacity';
 				console.log('Welcome Udacian!');
-				response.redirect('https://student-portal.udacity.com');
+				res.redirect('https://student-portal.udacity.com');
 
+			} else {
+				res.redirect('http://www.google.com');
 			}
 		} else {
 			console.log('Fail');
-			response.render('/');
+			res.render('/');
 		}
 
 		// response.end(!error && result.authenticated 
@@ -98,7 +119,13 @@ app.get('/verify', function(request, response) {
 	});
 });
 
-// port
-app.listen(8888);
+//Authorization check
+function checkAuth(req, res, next) {
+  if (req.session && req.session.user==='udacity' )
+     next();
+  else
+     res.redirect('/');
+}
 
+app.listen(8888);
 module.exports = app;
