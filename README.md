@@ -1,3 +1,18 @@
+# An OpenID example for Node and Udacity
+
+A Node.js and Express.js example of how to authenticate users using Udacity's OpenID credentials.
+
+##NOTE: node-openid requires express version 3.21.1 or earlier. Version 4+ will not work at the time of this edit.
+
+##Download:
+Navigate to `expressjs_example`
+Run `npm install`
+Then `node authentication_controller.js`
+
+This example will run on your localhost at port 8888, but this can be configured to whatever port is needed.
+
+##Below is documentation for the node-openid package
+
 # OpenID for Node.js
 
 OpenID for Node.js is (yes, you guessed it) an OpenID implementation for Node.js. 
